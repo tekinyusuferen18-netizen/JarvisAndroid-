@@ -1,8 +1,8 @@
 name: JARVIS APK
 
 on:
-  workflow_dispatch:
   push:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,14 +18,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Gradle
-        uses: gradle/actions/setup-gradle@v4
+      - name: Extract project ZIP
+        run: |
+          mkdir project
+          unzip -q JARVIS_Android_Proje.zip -d project
 
       - name: Build APK
-        run: gradle assembleDebug
+        run: |
+          WRAPPER=$(find project -name gradlew -type f | head -n 1)
+          if [ -z "$WRAPPER" ]; then
+            echo "gradlew bulunamadı"
+            exit 1
+          fi
+          DIR=$(dirname "$WRAPPER")
+          cd "$DIR"
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      - name: APK Yukle
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: JARVIS-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: project/**/build/outputs/apk/debug/*.apk
